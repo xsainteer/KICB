@@ -1,14 +1,13 @@
 using Domain.Common;
 
-namespace Domain.Errors;
+namespace Application.Clients;
 
+/// <summary>
+/// Client rules that need the database (unique email, existing accounts), so they are checked by
+/// <see cref="ClientService"/> rather than by the <c>Client</c> entity.
+/// </summary>
 public static class ClientErrors
 {
-    public static Error NotFound(Guid clientId) =>
-        new("Client.NotFound",
-            $"Client {clientId} was not found.",
-            ErrorType.NotFound);
-
     public static Error EmailTaken(string email) =>
         new("Client.EmailTaken",
             $"Email {email} is already used by another client.",

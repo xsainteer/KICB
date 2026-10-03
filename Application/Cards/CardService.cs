@@ -1,5 +1,6 @@
 using Application.Abstractions;
 using Application.Abstractions.Persistence;
+using Application.Common;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -24,7 +25,7 @@ public sealed class CardService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         return Result<IReadOnlyList<CardResponse>>.Success(account.Cards.Select(CardResponse.From).ToList());
     }
@@ -34,7 +35,7 @@ public sealed class CardService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         var card = FindCard(account, cardId);
         if (card is null)
@@ -49,7 +50,7 @@ public sealed class CardService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         var number = await numberGenerator.NewCardNumberAsync(cancellationToken);
         var issued = account.IssueCard(number, ExpirationDate(), type);
@@ -76,7 +77,7 @@ public sealed class CardService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         var result = operation(account);
         if (result.IsFailure)

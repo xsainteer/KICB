@@ -1,8 +1,8 @@
 using Application.Abstractions.Persistence;
+using Application.Common;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Errors;
 
 namespace Application.Phones;
 
@@ -15,7 +15,7 @@ public sealed class PhoneService(IClientRepository clients, IPhoneRepository pho
         CancellationToken cancellationToken = default)
     {
         if (!await clients.ExistsAsync(clientId, cancellationToken))
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
 
         var clientPhones = await phones.ListByClientAsync(clientId, cancellationToken);
         return Result<IReadOnlyList<PhoneResponse>>.Success(clientPhones.Select(PhoneResponse.From).ToList());
@@ -26,7 +26,7 @@ public sealed class PhoneService(IClientRepository clients, IPhoneRepository pho
     {
         var phone = await FindAsync(clientId, phoneId, cancellationToken);
         if (phone is null)
-            return PhoneErrors.NotFound(phoneId);
+            return NotFoundErrors.Phone(phoneId);
 
         return PhoneResponse.From(phone);
     }
@@ -35,7 +35,7 @@ public sealed class PhoneService(IClientRepository clients, IPhoneRepository pho
         CancellationToken cancellationToken = default)
     {
         if (!await clients.ExistsAsync(clientId, cancellationToken))
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
 
         var phone = new Phone(clientId, number, type);
         phones.Add(phone);
@@ -49,7 +49,7 @@ public sealed class PhoneService(IClientRepository clients, IPhoneRepository pho
     {
         var phone = await FindAsync(clientId, phoneId, cancellationToken);
         if (phone is null)
-            return PhoneErrors.NotFound(phoneId);
+            return NotFoundErrors.Phone(phoneId);
 
         phone.Update(number, type);
 
@@ -61,7 +61,7 @@ public sealed class PhoneService(IClientRepository clients, IPhoneRepository pho
     {
         var phone = await FindAsync(clientId, phoneId, cancellationToken);
         if (phone is null)
-            return PhoneErrors.NotFound(phoneId);
+            return NotFoundErrors.Phone(phoneId);
 
         phones.Remove(phone);
 

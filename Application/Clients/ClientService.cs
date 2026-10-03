@@ -2,7 +2,6 @@ using Application.Abstractions.Persistence;
 using Application.Common;
 using Domain.Common;
 using Domain.Entities;
-using Domain.Errors;
 
 namespace Application.Clients;
 
@@ -19,7 +18,7 @@ public sealed class ClientService(IClientRepository clients, IAccountRepository 
     {
         var client = await clients.GetByIdAsync(clientId, cancellationToken);
         if (client is null)
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
 
         return ClientResponse.From(client);
     }
@@ -43,7 +42,7 @@ public sealed class ClientService(IClientRepository clients, IAccountRepository 
     {
         var client = await clients.GetByIdAsync(clientId, cancellationToken);
         if (client is null)
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
         if (await clients.IsEmailTakenAsync(details.Email, exceptClientId: clientId, cancellationToken))
             return ClientErrors.EmailTaken(details.Email);
 
@@ -61,7 +60,7 @@ public sealed class ClientService(IClientRepository clients, IAccountRepository 
     {
         var client = await clients.GetByIdAsync(clientId, cancellationToken);
         if (client is null)
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
         if (await accounts.ExistsForClientAsync(clientId, cancellationToken))
             return ClientErrors.HasAccounts(clientId);
 

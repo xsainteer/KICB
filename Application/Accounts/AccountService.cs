@@ -1,9 +1,9 @@
 using Application.Abstractions;
 using Application.Abstractions.Persistence;
+using Application.Common;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Errors;
 
 namespace Application.Accounts;
 
@@ -21,7 +21,7 @@ public sealed class AccountService(
         CancellationToken cancellationToken = default)
     {
         if (!await clients.ExistsAsync(clientId, cancellationToken))
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
 
         var clientAccounts = await accounts.ListByClientAsync(clientId, cancellationToken);
         return Result<IReadOnlyList<AccountResponse>>.Success(clientAccounts.Select(AccountResponse.From).ToList());
@@ -31,7 +31,7 @@ public sealed class AccountService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         return AccountResponse.From(account);
     }
@@ -40,7 +40,7 @@ public sealed class AccountService(
         CancellationToken cancellationToken = default)
     {
         if (!await clients.ExistsAsync(clientId, cancellationToken))
-            return ClientErrors.NotFound(clientId);
+            return NotFoundErrors.Client(clientId);
 
         var number = await numberGenerator.NewAccountNumberAsync(cancellationToken);
         var account = new Account(clientId, number, currency);
@@ -68,7 +68,7 @@ public sealed class AccountService(
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
         if (account is null)
-            return AccountErrors.NotFound(accountId);
+            return NotFoundErrors.Account(accountId);
 
         var result = operation(account);
         if (result.IsFailure)

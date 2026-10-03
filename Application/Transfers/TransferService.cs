@@ -1,7 +1,7 @@
 using Application.Abstractions.Persistence;
 using Application.Accounts;
+using Application.Common;
 using Domain.Common;
-using Domain.Errors;
 
 namespace Application.Transfers;
 
@@ -19,11 +19,11 @@ public sealed class TransferService(IAccountRepository accounts, IUnitOfWork uni
     {
         var source = await accounts.GetByIdAsync(sourceAccountId, cancellationToken);
         if (source is null)
-            return AccountErrors.NotFound(sourceAccountId);
+            return NotFoundErrors.Account(sourceAccountId);
 
         var destination = await accounts.GetByIdAsync(destinationAccountId, cancellationToken);
         if (destination is null)
-            return AccountErrors.NotFound(destinationAccountId);
+            return NotFoundErrors.Account(destinationAccountId);
 
         var result = source.TransferTo(destination, amount);
         if (result.IsFailure)

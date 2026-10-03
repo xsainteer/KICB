@@ -15,7 +15,6 @@ internal sealed class AccountRepository(AppDbContext context) : IAccountReposito
         CancellationToken cancellationToken = default) =>
         await context.Accounts
             .AsNoTracking()
-            .Include(account => account.Cards)
             .Where(account => account.ClientId == clientId)
             .OrderBy(account => account.Number)
             .ToListAsync(cancellationToken);
