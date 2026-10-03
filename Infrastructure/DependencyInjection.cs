@@ -26,4 +26,15 @@ public static class DependencyInjection
 
         return services;
     }
+
+    /// <summary>
+    /// Creates the database if needed and applies pending migrations. Meant for development only: in production
+    /// migrations are a separate deploy step, so instances don't race and the app needs no schema rights.
+    /// </summary>
+    public static async Task ApplyMigrationsAsync(this IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await context.Database.MigrateAsync();
+    }
 }

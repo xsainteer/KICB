@@ -25,6 +25,8 @@ app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
+    await app.Services.ApplyMigrationsAsync();
+
     app.MapOpenApi();
     app.UseSwaggerUI(options => options.SwaggerEndpoint("/openapi/v1.json", "KICB API"));
 }
