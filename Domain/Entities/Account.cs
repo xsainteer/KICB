@@ -4,6 +4,10 @@ using Domain.Errors;
 
 namespace Domain.Entities;
 
+/// <summary>
+/// Aggregate root for an account and its cards: the rule "a closed account has no active cards" spans both,
+/// so cards are issued, blocked and unblocked only through their account.
+/// </summary>
 public class Account
 {
     private readonly List<Card> _cards = new();
@@ -95,6 +99,28 @@ public class Account
         return card;
     }
 
+    /// <remarks>Requires <see cref="Cards"/> to be loaded.</remarks>
+    public Result BlockCard(Guid cardId)
+    {
+        var card = FindCard(cardId);
+        if (card is null)
+            return CardErrors.NotFound(cardId);
+
+        return card.Block();
+    }
+
+    /// <remarks>Requires <see cref="Cards"/> to be loaded.</remarks>
+    public Result UnblockCard(Guid cardId)
+    {
+        var card = FindCard(cardId);
+        if (card is null)
+            return CardErrors.NotFound(cardId);
+        if (IsClosed)
+            return AccountErrors.Inactive(Id);
+
+        return card.Unblock();
+    }
+
     /// <remarks>Requires <see cref="Cards"/> to be loaded, otherwise the active-card check is skipped.</remarks>
     public Result Close()
     {
@@ -108,4 +134,6 @@ public class Account
         Status = AccountStatus.Closed;
         return Result.Success();
     }
+
+    private Card? FindCard(Guid cardId) => _cards.SingleOrDefault(card => card.Id == cardId);
 }

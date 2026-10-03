@@ -4,13 +4,15 @@ using Domain.Errors;
 
 namespace Domain.Entities;
 
+/// <summary>
+/// Part of the <see cref="Entities.Account"/> aggregate: cards are issued, blocked and unblocked through their account.
+/// </summary>
 public class Card
 {
     private Card()
     {
     } // EF Core
 
-    /// <summary>Cards are issued through <see cref="Entities.Account.IssueCard"/>.</summary>
     internal Card(Guid accountId, string number, DateOnly expirationDate, CardType type)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(number);
@@ -33,7 +35,7 @@ public class Card
     public Guid AccountId { get; private set; }
     public Account Account { get; private set; } = null!;
 
-    public Result Block()
+    internal Result Block()
     {
         if (Status == CardStatus.Blocked)
             return CardErrors.AlreadyBlocked(Id);
@@ -42,15 +44,10 @@ public class Card
         return Result.Success();
     }
 
-    /// <remarks>
-    /// Requires <see cref="Account"/> to be loaded: a closed account must not regain an active card.
-    /// </remarks>
-    public Result Unblock()
+    internal Result Unblock()
     {
         if (Status == CardStatus.Active)
             return CardErrors.NotBlocked(Id);
-        if (Account.IsClosed)
-            return AccountErrors.Inactive(AccountId);
 
         Status = CardStatus.Active;
         return Result.Success();
