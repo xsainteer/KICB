@@ -5,6 +5,11 @@ namespace Domain.Errors;
 
 public static class AccountErrors
 {
+    public static Error NotFound(Guid accountId) =>
+        new("Account.NotFound",
+            $"Account {accountId} was not found.",
+            ErrorType.NotFound);
+
     public static Error Inactive(Guid accountId) =>
         new("Account.Inactive",
             $"Account {accountId} is closed and cannot be operated on.",
