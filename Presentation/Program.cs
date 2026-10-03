@@ -2,13 +2,18 @@ using System.Text.Json.Serialization;
 using Application;
 using FluentValidation;
 using Infrastructure;
+using Presentation.Conventions;
 using Presentation.ExceptionHandling;
 using Presentation.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddControllers(options => options.Filters.Add<ValidationFilter>())
+    .AddControllers(options =>
+    {
+        options.Filters.Add<ValidationFilter>();
+        options.Conventions.Add(new DefaultSuccessResponseConvention());
+    })
     .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
