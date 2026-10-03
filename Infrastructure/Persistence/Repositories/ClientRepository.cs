@@ -10,6 +10,9 @@ internal sealed class ClientRepository(AppDbContext context) : IClientRepository
     public Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         context.Clients.SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
 
+    public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default) =>
+        context.Clients.AnyAsync(client => client.Id == id, cancellationToken);
+
     public async Task<PagedResult<Client>> ListAsync(ClientFilter filter, int page, int pageSize,
         CancellationToken cancellationToken = default)
     {

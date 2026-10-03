@@ -17,6 +17,12 @@ public sealed class Result<T> : Result
         ? _value!
         : throw new InvalidOperationException("Cannot access the value of a failed result.");
 
+    /// <summary>
+    /// Needed when <typeparamref name="T"/> is an interface (e.g. <c>IReadOnlyList&lt;X&gt;</c>):
+    /// C# does not apply user-defined implicit conversions from interface types.
+    /// </summary>
+    public static Result<T> Success(T value) => new(value);
+
     public static implicit operator Result<T>(T value) => new(value);
     public static implicit operator Result<T>(Error error) => new(error);
 }

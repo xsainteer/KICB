@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace Presentation.Controllers;
 
 [ApiController]
-[Produces("application/json")]
 public abstract class ApiController : ControllerBase
 {
     /// <summary>
@@ -12,6 +11,24 @@ public abstract class ApiController : ControllerBase
     /// </summary>
     protected ActionResult<T> FromResult<T>(Result<T> result) =>
         result.IsSuccess ? Ok(result.Value) : ErrorResult(result.Error!);
+
+    /// <summary>
+    /// Turns a <see cref="Result{T}"/> of a create operation into 201 Created, with a Location header pointing
+    /// to <paramref name="actionName"/>, or into a ProblemDetails response for its error.
+    /// </summary>
+    protected ActionResult<T> CreatedFromResult<T>(Result<T> result, string actionName, Func<T, object> routeValues) =>
+        result.IsSuccess
+            ? CreatedAtAction(actionName, routeValues(result.Value), result.Value)
+            : ErrorResult(result.Error!);
+
+    /// <summary>Turns a <see cref="Result"/> into 204 No Content, or into a ProblemDetails response for its error.</summary>
+    protected IActionResult NoContentFromResult(Result result)
+    {
+        if (result.IsFailure)
+            return ErrorResult(result.Error!);
+
+        return NoContent();
+    }
 
     /// <summary>
     /// Maps a business <see cref="Error"/> to ProblemDetails: the status comes from its <see cref="ErrorType"/>,

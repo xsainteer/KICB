@@ -35,6 +35,17 @@ public class ResultTests
     }
 
     [Fact]
+    public void ValueResult_SuccessFactory_WorksForInterfaceTypes()
+    {
+        IReadOnlyList<int> items = [1, 2];
+
+        var result = Result<IReadOnlyList<int>>.Success(items);
+
+        Assert.True(result.IsSuccess);
+        Assert.Same(items, result.Value);
+    }
+
+    [Fact]
     public void ValueResult_ThrowsOnValueAccessAfterFailure()
     {
         Result<int> result = SomeError;

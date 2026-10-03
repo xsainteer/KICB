@@ -1,41 +1,69 @@
+using Application.Abstractions;
 using Application.Abstractions.Persistence;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Errors;
 
 namespace Application.Accounts;
 
 /// <summary>
-/// Business operations on a single account and its cards. The rules live in the <see cref="Account"/> aggregate;
+/// Opening, reading and operating on accounts. The rules live in the <see cref="Account"/> aggregate;
 /// this service loads it, runs the operation and saves the result.
 /// </summary>
-public sealed class AccountService(IAccountRepository accounts, IUnitOfWork unitOfWork)
+public sealed class AccountService(
+    IAccountRepository accounts,
+    IClientRepository clients,
+    INumberGenerator numberGenerator,
+    IUnitOfWork unitOfWork)
 {
+    public async Task<Result<IReadOnlyList<AccountResponse>>> ListByClientAsync(Guid clientId,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await clients.ExistsAsync(clientId, cancellationToken))
+            return ClientErrors.NotFound(clientId);
+
+        var clientAccounts = await accounts.ListByClientAsync(clientId, cancellationToken);
+        return Result<IReadOnlyList<AccountResponse>>.Success(clientAccounts.Select(AccountResponse.From).ToList());
+    }
+
+    public async Task<Result<AccountResponse>> GetAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        var account = await accounts.GetByIdAsync(accountId, cancellationToken);
+        if (account is null)
+            return AccountErrors.NotFound(accountId);
+
+        return AccountResponse.From(account);
+    }
+
+    public async Task<Result<AccountResponse>> OpenAsync(Guid clientId, Currency currency,
+        CancellationToken cancellationToken = default)
+    {
+        if (!await clients.ExistsAsync(clientId, cancellationToken))
+            return ClientErrors.NotFound(clientId);
+
+        var number = await numberGenerator.NewAccountNumberAsync(cancellationToken);
+        var account = new Account(clientId, number, currency);
+        accounts.Add(account);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return AccountResponse.From(account);
+    }
+
     public Task<Result<AccountResponse>> DepositAsync(Guid accountId, decimal amount,
         CancellationToken cancellationToken = default) =>
-        ExecuteAsync(accountId, account => account.Deposit(amount), AccountResponse.From, cancellationToken);
+        ExecuteAsync(accountId, account => account.Deposit(amount), cancellationToken);
 
     public Task<Result<AccountResponse>> WithdrawAsync(Guid accountId, decimal amount,
         CancellationToken cancellationToken = default) =>
-        ExecuteAsync(accountId, account => account.Withdraw(amount), AccountResponse.From, cancellationToken);
+        ExecuteAsync(accountId, account => account.Withdraw(amount), cancellationToken);
 
     public Task<Result<AccountResponse>> CloseAsync(Guid accountId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(accountId, account => account.Close(), AccountResponse.From, cancellationToken);
+        ExecuteAsync(accountId, account => account.Close(), cancellationToken);
 
-    public Task<Result<CardResponse>> BlockCardAsync(Guid accountId, Guid cardId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteAsync(accountId, account => account.BlockCard(cardId), account => CardOf(account, cardId),
-            cancellationToken);
-
-    public Task<Result<CardResponse>> UnblockCardAsync(Guid accountId, Guid cardId,
-        CancellationToken cancellationToken = default) =>
-        ExecuteAsync(accountId, account => account.UnblockCard(cardId), account => CardOf(account, cardId),
-            cancellationToken);
-
-    private async Task<Result<TResponse>> ExecuteAsync<TResponse>(
+    private async Task<Result<AccountResponse>> ExecuteAsync(
         Guid accountId,
         Func<Account, Result> operation,
-        Func<Account, TResponse> toResponse,
         CancellationToken cancellationToken)
     {
         var account = await accounts.GetByIdAsync(accountId, cancellationToken);
@@ -47,9 +75,6 @@ public sealed class AccountService(IAccountRepository accounts, IUnitOfWork unit
             return result.Error!;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return toResponse(account);
+        return AccountResponse.From(account);
     }
-
-    private static CardResponse CardOf(Account account, Guid cardId) =>
-        CardResponse.From(account.Cards.Single(card => card.Id == cardId));
 }

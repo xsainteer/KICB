@@ -1,7 +1,7 @@
 using Domain.Entities;
 using Domain.Enums;
 
-namespace Application.Accounts;
+namespace Application.Cards;
 
 /// <summary>
 /// A card as exposed by the API. The full card number is never returned, only its last four digits.

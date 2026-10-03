@@ -1,4 +1,6 @@
+using Application.Abstractions;
 using Application.Abstractions.Persistence;
+using Infrastructure.Numbers;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IPhoneRepository, PhoneRepository>();
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<INumberGenerator, NumberGenerator>();
 
         return services;
     }
