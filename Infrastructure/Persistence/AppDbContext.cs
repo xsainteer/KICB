@@ -37,7 +37,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     private void BumpAccountVersions()
     {
         var changedAccountIds = ChangeTracker.Entries<Card>()
-            .Where(entry => entry.State is EntityState.Added or EntityState.Modified)
+            .Where(entry => entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
             .Select(entry => entry.Entity.AccountId)
             .Concat(ChangeTracker.Entries<Account>()
                 .Where(entry => entry.State == EntityState.Modified)
